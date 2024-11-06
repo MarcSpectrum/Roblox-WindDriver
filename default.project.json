@@ -1,0 +1,29 @@
+{
+  "name": "Roblox---One-Piece---Killer",
+  "tree": {
+    "$className": "DataModel",
+    
+    "ReplicatedStorage": {
+      "Modules": {
+        "$path" : "src/Modules"
+      },
+      "Scripts": {
+        "$path" : "src/Scripts"
+      },
+      "Models": {
+        "$path" : "src/Models"
+      }
+    },
+
+    "ServerScriptService": {
+    },
+
+    "StarterPlayer": {
+      "StarterPlayerScripts": {
+      } ,
+      "StarterCharacterScripts": {
+      }
+    }
+
+  }
+}
