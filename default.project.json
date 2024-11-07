@@ -18,6 +18,12 @@
     "ServerScriptService": {
     },
 
+    "StarterPack": {
+      "LocalScripts": {
+        "$path" : "src/LocalScripts"
+      }
+    },
+
     "StarterPlayer": {
       "StarterPlayerScripts": {
       } ,
