@@ -3,17 +3,17 @@ local isServer = game:GetService('RunService'):IsServer()
 if isServer then
     local self = {}
 
-    local frwrdFX = workspace:WaitForChild('Holder'):WaitForChild('ForwardFX')
-    local dwnFX = workspace:WaitForChild('Holder'):WaitForChild('DownFX')
-    local trndFX = workspace:WaitForChild('Holder'):WaitForChild('TornadoFX')
+    local frwrdFX = workspace:WaitForChild('Dummy'):WaitForChild('ForwardFX')
+    local dwnFX = workspace:WaitForChild('Dummy'):WaitForChild('DownFX')
+    local trndFX = workspace:WaitForChild('Dummy'):WaitForChild('TornadoFX')
 
     function self.initialize()
         self['Promt'] = workspace:WaitForChild('Part'):WaitForChild('ProximityPrompt')
         self['Anims'] = game:GetService('ServerStorage'):WaitForChild('Killer_Animations'):GetChildren()
-        self['Dummy'] = workspace:WaitForChild('Holder'):WaitForChild('R6'):WaitForChild('Humanoid'):WaitForChild('Animator')
+        self['Dummy'] = workspace:WaitForChild('Dummy'):WaitForChild('R6'):WaitForChild('Humanoid'):WaitForChild('Animator')
 
-        self['101'] = workspace:WaitForChild('Holder'):WaitForChild('101')
-        self['102'] = workspace:WaitForChild('Holder'):WaitForChild('102')
+        self['101'] = workspace:WaitForChild('Dummy'):WaitForChild('101')
+        self['102'] = workspace:WaitForChild('Dummy'):WaitForChild('102')
 
         self['current'] = 1
         self['vers'] = 0
@@ -91,7 +91,7 @@ if isServer then
             coroutine.yield()
             local trck = _PlayAnim(game.ServerStorage.Killer_Animations['Killer_Skill1_Release'])
             trck:GetMarkerReachedSignal('Cast'):Once(function()
-                frwrdFX_nw.Parent = workspace.Holder.R6.HumanoidRootPart
+                frwrdFX_nw.Parent = workspace.Dummy.R6.HumanoidRootPart
                 frwrdFX_nw.MainWind:Emit(7)
             end)
         end
@@ -118,8 +118,8 @@ if isServer then
             local dwnFX_nwR = dwnFX.Wind1:Clone()
             game:GetService('Debris'):AddItem(dwnFX_nwL, 3)
             game:GetService('Debris'):AddItem(dwnFX_nwR, 3)
-            dwnFX_nwL.Parent = workspace.Holder.R6['Left Arm']
-            dwnFX_nwR.Parent = workspace.Holder.R6['Right Arm']
+            dwnFX_nwL.Parent = workspace.Dummy.R6['Left Arm']
+            dwnFX_nwR.Parent = workspace.Dummy.R6['Right Arm']
             local trck = _PlayAnim(game.ServerStorage.Killer_Animations['Killer_Skill3_Release'])
             trck:GetMarkerReachedSignal('Cast'):Once(function()
                 dwnFX_nwL.CFrame *= CFrame.Angles(0,0,-math.rad(90))
@@ -144,7 +144,7 @@ if isServer then
                 self['101'].Cube.Attachment0.W2:Emit(1)
                 self['102'].Cube.Attachment0.W1:Emit(1)
                 self['102'].Cube.Attachment0.W2:Emit(1)
-                local spot = workspace.Holder.R6['HumanoidRootPart'].CFrame
+                local spot = workspace.Dummy.R6['HumanoidRootPart'].CFrame
                 spot += (spot.LookVector*7)
                 trndFX_nw:PivotTo(spot)
                 trndFX_nw.Parent = workspace.Terrain
@@ -165,7 +165,8 @@ if isServer then
         }
         --list = {'func_skill3'}
         local routine = nil
-        while true do
+        --[[
+                while true do
             if routine and coroutine.status(routine) == 'suspended' then
                 coroutine.resume(routine)
             else
@@ -177,6 +178,7 @@ if isServer then
             end
             task.wait(1)
         end
+        ]]--
     end
     
     return self

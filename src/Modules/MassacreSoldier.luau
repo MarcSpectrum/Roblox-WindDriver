@@ -1,4 +1,5 @@
 local isServer = game:GetService('RunService'):IsServer()
+local Workspace = game:GetService('Workspace')
 
 if isServer then
     local self = {}
@@ -22,13 +23,15 @@ else
     local gdgt = srvc_rplctstrg:WaitForChild('Gadget')
     local gdgt_anims = gdgt:WaitForChild('Animations')
     local frwrdFX = gdgt:WaitForChild('ForwardFX')
-    local dwnFX = gdgt:WaitForChild('DownFX')
     local trndFX = gdgt:WaitForChild('TornadoFX')
+    local cnfttFX = gdgt:WaitForChild('ConfettiFX')
+    local gdgt_bullet = gdgt:WaitForChild('Bullet')
 
     function self.initialize()
         local ply = game.Players.LocalPlayer
         local char = ply.Character
         local hum = char:WaitForChild('Humanoid')
+        local mouse = ply:GetMouse()
         local controls = require(ply.PlayerScripts:WaitForChild('PlayerModule')):GetControls()
 
         --// LoadWeapon
@@ -105,6 +108,7 @@ else
                 end)
             end
             clss_nw.CNCTN = srvc_run.RenderStepped:Connect(func)
+            gdgt['Spin1']:Play()
 
             return clss_nw
         end
@@ -112,6 +116,72 @@ else
             self.AAA1:Stop()
             self.AAA2:Stop()
             self.CNCTN:Disconnect()
+            gdgt['Spin1']:Stop()
+        end
+
+        local _LoopCharacterLock = {}
+        _LoopCharacterLock.__index = _LoopCharacterLock
+        function _LoopCharacterLock.Connect(up)
+            local clss_nw = setmetatable({}, _LoopCharacterLock)
+            local cf_nw = char.HumanoidRootPart.CFrame + Vector3.new(0,up,0)
+            clss_nw['func'] = function()
+                local mouse_pos = mouse.Hit.Position
+                local pivot_cf = CFrame.lookAt(
+                    cf_nw.Position,
+                    Vector3.new(mouse_pos.X, cf_nw.Position.Y, mouse_pos.Z)
+                )
+                char:PivotTo(pivot_cf)
+                return pivot_cf
+            end
+            clss_nw['CNCTN'] = srvc_run.Heartbeat:Connect(clss_nw['func'])
+            return clss_nw
+        end
+        function _LoopCharacterLock:Disconnect()
+            self.CNCTN:Disconnect()
+            return self['func']()
+        end
+
+        local _Blue = false
+        local function _Switch()
+            local v1,v2, v3
+            local w101 = self['Gauntlet_Left'].Cube.Attachment0.W1
+            local w102 = self['Gauntlet_Left'].Cube.Attachment0.W2
+            local w201 = self['Gauntlet_Right'].Cube.Attachment0.W1
+            local w202 = self['Gauntlet_Right'].Cube.Attachment0.W2
+            if _Blue then
+                v1 = ColorSequence.new(Color3.new(0,0,0))
+                v2 = ColorSequence.new(Color3.new(255,255,255))
+                v3 = Color3.fromRGB(255,255,255)
+                w101.Brightness = 0
+                w101.LightEmission = 0
+                w201.Brightness = 0
+                w201.LightEmission = 0
+                _Blue = false
+            else
+                v1 = ColorSequence.new(Color3.new(0, 0.466666, 1))
+                v2 = ColorSequence.new(Color3.new(0, 170, 255))
+                v3 = Color3.fromRGB(85, 255, 255)
+                w101.Brightness = 2
+                w101.LightEmission = 1
+                w201.Brightness = 2
+                w201.LightEmission = 1
+                _Blue = true
+            end
+            w101.Color = v1
+            w201.Color = v1
+            w102.Color = v2
+            w202.Color = v2
+            frwrdFX.Wind1.MainWind.Color = v2
+            trndFX.Wind1.MainWind.Color = v2
+            gdgt_bullet.Color = v3
+            gdgt_bullet.Trail.Color = v2
+            local cnfttFX_nw = cnfttFX.ParticleEmitter:Clone()
+            cnfttFX_nw.Color = v2
+            game:GetService('Debris'):AddItem(cnfttFX_nw, 2)
+            cnfttFX_nw.Parent = char.HumanoidRootPart
+            cnfttFX_nw:Emit(50)
+            gdgt['Switch1'].PitchShiftSoundEffect.Octave = math.random(.1,2)
+            gdgt['Switch1']:Play()
         end
 
         --// SetAnimations
@@ -220,7 +290,10 @@ else
                     local a, b
                     repeat a, b = next(_NormalAttack['Anims'], _NormalAttack['Key']) ; _NormalAttack['Key'] = a
                     until b
+                    if a >= 5 then _Switch() end
                     _PlayAnim(gdgt_anims[b])
+                    gdgt['Slash1'].PitchShiftSoundEffect.Octave = math.random(.1,2)
+                    gdgt['Slash1']:Play()
                     controls:Enable()
                     _Set(.5)
                 end
@@ -234,17 +307,24 @@ else
                 if not _Check() then return end
                 if stte.Name ~= 'Begin' then return end
                 local func_nw = function()
-                    local frwrdFX_nw = frwrdFX.Wind1:Clone()
-                    game:GetService('Debris'):AddItem(frwrdFX_nw, 2)
+                    local chrctr_lck = _LoopCharacterLock.Connect(.5)
                     controls:Disable()
                     _PlayAnim(gdgt_anims['Killer_Skill1_Hold'])
                     coroutine.yield()
+                    local cf_final = chrctr_lck:Disconnect()
+                    gdgt['WIndDash1'].PitchShiftSoundEffect.Octave = math.random(.1,2)
+                    gdgt['WIndDash1']:Play()
                     local trck = _PlayAnim(gdgt_anims['Killer_Skill1_Release'])
                     trck:GetMarkerReachedSignal('Cast'):Once(function()
+                        local frwrdFX_nw = frwrdFX.Wind1:Clone()
+                        game:GetService('Debris'):AddItem(frwrdFX_nw, 2)
                         frwrdFX_nw.Parent = char.HumanoidRootPart
                         frwrdFX_nw.MainWind:Emit(7)
+                        char.HumanoidRootPart.CFrame += (cf_final.LookVector*25)
                     end)
-                    controls:Enable()
+                    trck.Ended:Once(function()
+                        controls:Enable()
+                    end)
                     _Set(1)
                 end
                 _Activate(key, func_nw, 5)
@@ -259,9 +339,9 @@ else
                 local func_nw = function()
                     local spnng = _LoopSpinningBlade.Connect()
                     _PlayAnim(gdgt_anims['Killer_Skill2_Hold'])
-                    hum.WalkSpeed *= 2
+                    hum.WalkSpeed *= 3
                     coroutine.yield()
-                    hum.WalkSpeed /= 2
+                    hum.WalkSpeed /= 3
                     _PlayAnim(nil)
                     spnng:Disconnect()
                     self['_LoadAnim']()
@@ -277,21 +357,43 @@ else
                 if not _Check() then return end
                 if stte.Name ~= 'Begin' then return end
                 local func_nw = function()
-                    local dwnFX_nwL = dwnFX.Wind1:Clone()
-                    local dwnFX_nwR = dwnFX.Wind1:Clone()
-                    game:GetService('Debris'):AddItem(dwnFX_nwL, 3)
-                    game:GetService('Debris'):AddItem(dwnFX_nwR, 3)
-                    dwnFX_nwL.Parent = char['Left Arm']
-                    dwnFX_nwR.Parent = char['Right Arm']
+                    local chrctr_lck = _LoopCharacterLock.Connect(1.5)
                     local spnng = _LoopSpinningBlade.Connect()
                     controls:Disable()
-                    local trck = _PlayAnim(gdgt_anims['Killer_Skill3_Release'])
+                    _PlayAnim(gdgt_anims['Skill302_Hold'])
+                    coroutine.yield()
+                    local trck = _PlayAnim(gdgt_anims['Skill302_Release'])
                     trck:GetMarkerReachedSignal('Cast'):Once(function()
-                        dwnFX_nwL.CFrame *= CFrame.Angles(0,0,-math.rad(90))
-                        dwnFX_nwR.CFrame *= CFrame.Angles(0,0,math.rad(90))
-                        dwnFX_nwL.MainWind:Emit(25)
-                        dwnFX_nwR.MainWind:Emit(25)
                         spnng:Disconnect()
+                        local cf_final = chrctr_lck:Disconnect()
+
+                        local prjctl_bllt = gdgt_bullet:Clone()
+                        prjctl_bllt.Parent = workspace.Terrain
+                        prjctl_bllt.CFrame = cf_final
+                        local prjctl_cnt = 0
+                        local prjctl_cnnctn
+                        gdgt['Shoot1'].PitchShiftSoundEffect.Octave = math.random(.1,2)
+                        gdgt['Shoot1']:Play()
+                        local function fire()
+                            if prjctl_cnt >= 30 then
+                                local prjctl_cf = prjctl_bllt.CFrame
+                                prjctl_bllt:Destroy()
+                                prjctl_cnnctn:Disconnect()
+                                local trndFX_nw = trndFX:Clone()
+                                game:GetService('Debris'):AddItem(trndFX_nw, 5)
+                                trndFX_nw:PivotTo(prjctl_cf)
+                                trndFX_nw.Parent = Workspace.Terrain
+                                trndFX_nw.Wind1.MainWind.Enabled = true
+                                gdgt['Tornado1'].PitchShiftSoundEffect.Octave = math.random(.1,2)
+                                gdgt['Tornado1']:Play()
+                                task.delay(3, function()
+                                    trndFX_nw.Wind1.MainWind.Enabled = false
+                                end)
+                            end
+                            prjctl_bllt.CFrame += (cf_final.LookVector*1)
+                            prjctl_cnt += 1
+                        end
+                        prjctl_cnnctn = srvc_run.Heartbeat:Connect(fire)
                     end)
                     trck.Ended:Once(function()
                         controls:Enable()
@@ -308,8 +410,7 @@ else
                 if not _Check() then return end
                 if stte.Name ~= 'Begin' then return end
                 local func_nw = function()
-                    local trndFX_nw = trndFX:Clone()
-                    game:GetService('Debris'):AddItem(trndFX_nw, 5)
+                    local chrctr_lck = _LoopCharacterLock.Connect(1.5)
                     controls:Disable()
                     local spnng = _LoopSpinningBlade.Connect()
                     _PlayAnim(gdgt_anims['Killer_Skill4_Hold'])
@@ -317,13 +418,18 @@ else
                     local trck = _PlayAnim(gdgt_anims['Killer_Skill4_Release'])
                     trck:GetMarkerReachedSignal('Cast'):Once(function()
                         _SpinTheBlade()
+                        gdgt['Tornado1'].PitchShiftSoundEffect.Octave = math.random(.1,2)
+                        gdgt['Tornado1']:Play()
                         local spot = char['HumanoidRootPart'].CFrame
                         spot += (spot.LookVector*7)
+                        local trndFX_nw = trndFX:Clone()
+                        game:GetService('Debris'):AddItem(trndFX_nw, 5)
                         trndFX_nw:PivotTo(spot)
                         trndFX_nw.Parent = workspace.Terrain
                         trndFX_nw.Wind1.MainWind.Enabled = true
                     end)
                     spnng:Disconnect()
+                    chrctr_lck:Disconnect()
                     controls:Enable()
                     _Set(1)
                 end
